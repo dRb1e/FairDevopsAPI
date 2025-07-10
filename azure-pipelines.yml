@@ -1,0 +1,52 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+# Local self-hosted agent havuzunun adı
+pool:
+  name: "FairDevopsApı"
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+# ⬇️ .NET SDK kurulumu (DotNet 8)
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.x'
+
+# ⬇️ Projeyi build et (kontrol amaçlı)
+- script: dotnet build --configuration $(buildConfiguration)
+  displayName: 'Build the project'
+
+# ⬇️ Projeyi publish et (CI aşaması için, opsiyonel)
+- script: dotnet publish --configuration $(buildConfiguration) -o "$(Build.ArtifactStagingDirectory)"
+  displayName: 'Publish the project'
+
+# ⬇️ Build çıktısını artifact olarak yükle (opsiyonel)
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+
+# ⬇️ Docker image oluştur
+- script: docker build -t fairdevops-api:latest .
+  displayName: 'Docker Build'
+
+# ⬇️ Helm ile deploy et (Local Kubernetes)
+- task: CmdLine@2
+  displayName: 'Deploy with Helm'
+  inputs:
+    script: helm upgrade --install fairdevops-api ./helm
+    workingDirectory: '$(Build.SourcesDirectory)'
+
+# ⬇️ Kubernetes durumu kontrol et
+- script: |
+    kubectl get pods
+    kubectl get svc
+  displayName: 'Check Kubernetes Status'

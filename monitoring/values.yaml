@@ -1,0 +1,56 @@
+prometheus:
+  enabled: true
+  service:
+    type: NodePort
+    port: 9090
+    nodePort: 30090
+  
+  config:
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      - job_name: 'fairdevops-api'
+        static_configs:
+          - targets: ['fairdevops-api:8080']
+        metrics_path: '/metrics'
+
+grafana:
+  enabled: true
+  service:
+    type: NodePort
+    port: 3000
+    nodePort: 30091
+  
+  adminPassword: "admin123"
+  
+  dashboards:
+    default:
+      fairdevops-dashboard:
+        json: |
+          {
+            "dashboard": {
+              "title": "Fair DevOps API Dashboard",
+              "panels": [
+                {
+                  "title": "HTTP Requests Total",
+                  "type": "stat",
+                  "targets": [
+                    {
+                      "expr": "weather_requests_total",
+                      "legendFormat": "{{endpoint}}"
+                    }
+                  ]
+                },
+                {
+                  "title": "HTTP Request Rate",
+                  "type": "graph",
+                  "targets": [
+                    {
+                      "expr": "rate(weather_requests_total[5m])",
+                      "legendFormat": "{{endpoint}}"
+                    }
+                  ]
+                }
+              ]
+            }
+          } 

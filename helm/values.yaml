@@ -1,0 +1,11 @@
+replicaCount: 1
+
+image:
+  repository: fairdevops-api
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 30081
